@@ -9,14 +9,14 @@ def portfolio_cost(filename: Path) -> float:
     total_cost = 0.0
     with filename.open('r') as f:
         rows = csv.reader(f)
-        # skipping the headers row
-        next(rows)
-        for row in rows:
+        # saving the headers row
+        headers = next(rows)
+        for i, row in enumerate(rows, start=1):
             try:
-                # row format is: name,shares,price
-                total_cost += float(row[1]) * float(row[2])
+                row_dict = dict(zip(headers, row))
+                total_cost += int(row_dict['shares']) * float(row_dict['price'])
             except ValueError:
-                print(f"Warning: file {filename} has a bad line")
+                print(f"Warning: Wrong format at Line {i} in file {filename}")
 
     return total_cost
 
