@@ -5,9 +5,9 @@ from pathlib import Path
 import csv
 
 
-def portfolio_cost(filename: str) -> float:
+def portfolio_cost(filename: Path) -> float:
     total_cost = 0.0
-    with Path(filename).open('r') as f:
+    with filename.open('r') as f:
         rows = csv.reader(f)
         # skipping the headers row
         next(rows)
