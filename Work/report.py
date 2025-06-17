@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
 # report.py
 
-from pathlib import Path
 import csv
+from pathlib import Path
+from fileparse import parse_csv
 
 
 def read_portfolio(filename: Path) -> list:
@@ -14,24 +16,8 @@ def read_portfolio(filename: Path) -> list:
     Returns:
         list : The result list of stocks
     """
-    portfolio = []
-    with filename.open('r') as f:
-        rows = csv.reader(f)
-        # saving the headers row
-        headers = next(rows)
-
-        for i, row in enumerate(rows, start=1):
-            try:
-                stock = dict(zip(headers, row))
-                stock = {
-                    'name': stock['name'],
-                    'shares': int(stock['shares']),
-                    'price': float(stock['price'])
-                }
-                portfolio.append(stock)
-            except ValueError:
-                print(f"Warning: Wrong format at Line {i} in file {filename}")
-
+    with filename.open("r") as f:
+        portfolio = parse_csv(lines=f)
     return portfolio
 
 
@@ -45,20 +31,23 @@ def read_prices(filename: Path) -> dict:
      Returns:
          list : The result dictionary of stocks names and prices
      """
-    names_and_prices = {}
-    with filename.open('r') as f:
-        rows = csv.reader(f)
-        for i, row in enumerate(rows):
-            try:
-                # row format is: name,price
-                names_and_prices[row[0]] = float(row[1])
-            except (ValueError, IndexError):
-                print(f"Warning: Wrong format at Line {i} in file {filename}")
-
+    with filename.open("r") as f:
+        names_and_prices = parse_csv(lines=f, types=[str, float], has_headers=False)
+    names_and_prices = dict(names_and_prices)
     return names_and_prices
 
 
-def make_report(portfolio: list[dict], prices: dict) -> list:
+def make_report(portfolio: list[dict], prices: dict) -> list[dict]:
+    """
+     Makes a report out of the current prices and a porfolio
+
+     Args:
+         portfolio (list[dict]): The list of the stocks. each stock is a dict
+         prices (list[tuple]): The names and prices of the stocks. Each stock is a tuple
+
+     Returns:
+         list[dict]: The report
+     """
     report = []
     for stock in portfolio:
         name = stock["name"]
@@ -76,14 +65,40 @@ def make_report(portfolio: list[dict], prices: dict) -> list:
     return report
 
 
-p1 = Path(r"Data\portfolio.csv")
-p2 = Path(r"Data\prices.csv")
-portfolio = read_portfolio(p1)
-prices = read_prices(p2)
-report = make_report(portfolio, prices)
+def print_report(report: list[dict]) -> None:
+    """
+     Prints a report nicely
 
-headers_string = f"{'Name':<10s} {'Shares':<10s} {'Price':<10s} {'Change':<10s}"
-print(headers_string)
-print('-'*len(headers_string))
-for stock in report:
-    print(f"{stock['name']:<10s} {stock['shares']:<10d} {stock['price']:<10.2f} {stock['change']:<10.2f}")
+     Args:
+         report (list[dict]) : The report to print
+
+     Returns:
+         None
+     """
+    headers = ("Name", "Shares", "Price", "Change")
+    col_width = 10
+    for header in headers:
+        print(f"{header:>{col_width}s}", end=' ')
+    print()
+
+    headers = [header.lower() for header in headers]
+    print((('-' * 10) + ' ') * len(headers))
+    for stock in report:
+        for header in headers:
+            value = stock[header]
+            if isinstance(value, int):
+                print(f"{value:>{col_width}d}", end=' ')
+            elif isinstance(value, float):
+                print(f"{value:>{col_width}.2f}", end=' ')
+            else:
+                print(f"{str(value):>{col_width}s}", end=' ')
+        print()
+
+
+def portfolio_report(portfolio_filename: str, prices_filename: str) -> None:
+    portfolio_path = Path(portfolio_filename)
+    prices_path = Path(prices_filename)
+    portfolio = read_portfolio(portfolio_path)
+    prices = read_prices(prices_path)
+    report = make_report(portfolio, prices)
+    print_report(report)

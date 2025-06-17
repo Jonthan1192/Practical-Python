@@ -1,29 +1,27 @@
+#!/usr/bin/env python3
 # pcost.py
 
 import argparse
 from pathlib import Path
-import csv
+from report import read_portfolio
 
 
 def portfolio_cost(filename: Path) -> float:
+    portfolio = read_portfolio(filename)
     total_cost = 0.0
-    with filename.open('r') as f:
-        rows = csv.reader(f)
-        # saving the headers row
-        headers = next(rows)
-        for i, row in enumerate(rows, start=1):
-            try:
-                row_dict = dict(zip(headers, row))
-                total_cost += int(row_dict['shares']) * float(row_dict['price'])
-            except ValueError:
-                print(f"Warning: Wrong format at Line {i} in file {filename}")
-
+    for stock in portfolio:
+        total_cost += stock['shares'] * stock['price']
     return total_cost
 
 
-parser = argparse.ArgumentParser(description="Calculate the total cost of a portfolio file.")
-parser.add_argument("filename", type=Path, help="Path to the input CSV file")
-args = parser.parse_args()
+def main():
+    parser = argparse.ArgumentParser(description="Calculate the total cost of a portfolio file.")
+    parser.add_argument("filename", type=Path, help="Path to the input CSV file")
+    args = parser.parse_args()
 
-cost = portfolio_cost(args.filename)
-print("Total cost:", cost)
+    cost = portfolio_cost(args.filename)
+    print("Total cost:", cost)
+
+
+if __name__ == '__main__':
+    main()

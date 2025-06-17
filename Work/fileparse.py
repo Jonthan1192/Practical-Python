@@ -1,39 +1,139 @@
 # fileparse.py
 
 import csv
-from pathlib import Path
-from typing import List, Dict
+from typing import List, Any, Callable
 
-def parse_csv(filename: Path) -> List[Dict[str, str]]:
+
+def apply_types_functions(types, lst):
+    return [func(val) for func, val in zip(types, lst)]
+
+
+def parse_csv(lines: Any, select: List[str] = None, types: List[Callable] = None, has_headers: bool = True, delimiter: str = ',', silence_errors=False) -> List:
     """
     Parse a CSV file into a list of records as dictionaries.
 
     Args:
-        filename (Path): Path to the CSV file to parse.
+        lines (Path): CSV lines to parse.
+        select (List[str]): List of columns to be picked out
+        types (List[Callable]): List of functions to apply to each column values
+        has_headers (bool): Whether the first line of the file contains column headers
+        delimiter (str): The column separator in the file
+        silence_errors (bool): If True, error messages will be silenced
 
     Returns:
-        List[Dict[str, str]]: A list of dictionaries representing the CSV rows.
+        List: A list of stocks represented in the CSV rows.
     """
+    if not has_headers and select is not None:
+        raise RuntimeError("select argument requires column headers")
+
+    # Set default values to select and types args
+    if select is None:
+        select = ['name', 'shares', 'price']
+    if types is None:
+        types = [str, int, float]
     records = []
+    start_row = 0
 
-    # Open the file
-    with filename.open("r") as f:
+    rows = csv.reader(lines, delimiter=delimiter)
 
-        # Parse the file
-        rows = csv.reader(f)
-
-        # Read the file headers
+    # Read the file headers
+    if has_headers:
         headers = next(rows)
 
-        # Read all row
-        for row in rows:
-            
-            # Skip empty rows
-            if not row:
-                continue
-            
-            # Create the record and add it to the list
-            record = dict(zip(headers, row))
+        # Calculate indices
+        indices = [headers.index(column) for column in select]
+        start_row = 1
+
+    # Read all row
+    for i, row in enumerate(rows, start=start_row):
+        # Skip empty rows
+        if not row:
+            continue
+        try:
+            if has_headers:
+                # Remove the unwanted columns, and order the row so it wil match select
+                row = [row[index] for index in indices]
+                row = apply_types_functions(types, row)
+
+                # Create the record and add it to the list
+                record = dict(zip(select, row))
+            else:
+                row = apply_types_functions(types, row)
+                record = row
             records.append(record)
+        except ValueError as e:
+            if not silence_errors:
+                print(f"Wrong format at Line {i}: {row}\n"
+                      f"Wrong format at Line {i}: {e}")
 
     return records
+
+
+# def parse_csv(filename: Path, select: List[str] = None, types: List[Callable] = None, has_headers: bool = True, delimiter: str = ',', silence_errors=False) -> List:
+#     """
+#     Parse a CSV file into a list of records as dictionaries.
+#
+#     Args:
+#         filename (Path): Path to the CSV file to parse.
+#         select (List[str]): List of columns to be picked out
+#         types (List[Callable]): List of functions to apply to each column values
+#         has_headers (bool): Whether the first line of the file contains column headers
+#         delimiter (str): The column separator in the file
+#         silence_errors (bool): If True, error messages will be silenced
+#
+#     Returns:
+#         List: A list of stocks represented in the CSV rows.
+#     """
+#     if not has_headers and select is not None:
+#         raise RuntimeError("select argument requires column headers")
+#
+#     # Set default values to select and types args
+#     if select is None:
+#         select = ['name', 'shares', 'price']
+#     if types is None:
+#         types = [str, int, float]
+#
+#     records = []
+#
+#     # Open the file
+#     with filename.open("r") as f:
+#
+#         # Parse the file
+#         rows = csv.reader(f, delimiter=delimiter)
+#         start_row = 0
+#
+#         # Read the file headers
+#         if has_headers:
+#             headers = next(rows)
+#
+#             # Calculate indices
+#             indices = [headers.index(column) for column in select]
+#
+#             start_row = 1
+#
+#         # Read all row
+#         for i, row in enumerate(rows, start=start_row):
+#             # Skip empty rows
+#             if not row:
+#                 continue
+#
+#             try:
+#                 if has_headers:
+#                     # Remove the unwanted columns, and order the row so it wil match select
+#                     row = [row[index] for index in indices]
+#
+#                     row = apply_types_functions(types, row)
+#
+#                     # Create the record and add it to the list
+#                     record = dict(zip(select, row))
+#                 else:
+#                     row = apply_types_functions(types, row)
+#                     record = row
+#
+#                 records.append(record)
+#             except ValueError as e:
+#                 if not silence_errors:
+#                     print(f"Wrong format at Line {i}: {row}\n"
+#                           f"Wrong format at Line {i}: {e}")
+#
+#     return records
