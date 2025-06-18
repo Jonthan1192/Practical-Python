@@ -9,9 +9,7 @@ from stock import Stock
 
 def portfolio_cost(filename: Path) -> float:
     portfolio = read_portfolio(filename)
-    total_cost = 0.0
-    for stock in portfolio:
-        total_cost += stock.shares * stock.price
+    total_cost = sum([stock.cost for stock in portfolio])
     return total_cost
 
 
