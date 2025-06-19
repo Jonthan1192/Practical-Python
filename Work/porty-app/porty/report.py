@@ -2,12 +2,12 @@
 # report.py
 
 from pathlib import Path
-from fileparse import parse_csv
+from .fileparse import parse_csv
 from collections import namedtuple
-from tableformat import TableFormatter
-import tableformat
+from .tableformat import TableFormatter
+from . import tableformat
 import argparse
-from portfolio import Portfolio
+from .portfolio import Portfolio
 
 # Define a namedtuple to represent a stock record
 TableRow = namedtuple('TableRow', ['name', 'shares', 'price', 'change'])
