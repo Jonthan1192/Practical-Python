@@ -1,22 +1,15 @@
 # stock.py
 
-class Stock:
-    __slots__ = ('name', '_shares', 'price')
+from pydantic import BaseModel, Field, field_validator
 
-    def __init__(self, name: str, shares: int, price: float):
-        self.name = name
-        self.shares = shares
-        self.price = price
 
-    @property
-    def shares(self):
-        return self._shares
-
-    @shares.setter
-    def shares(self, value):
-        if not isinstance(value, int):
-            raise TypeError('Expected int')
-        self._shares = value
+class Stock(BaseModel):
+    """
+    Represents a stock holding with a name, number of shares, and price per share.
+    """
+    name: str = Field(min_length=1, description="Stock symbol")
+    shares: int = Field(gt=0, description="Number of shares")
+    price: float = Field(gt=0.0, description="Price per share")
 
     @property
     def cost(self):
@@ -24,6 +17,3 @@ class Stock:
 
     def sell(self, sell_amount: int):
         self.shares -= sell_amount
-
-    def __repr__(self):
-        return f"Stock('{self.name}', {self.shares}, {self.price})"

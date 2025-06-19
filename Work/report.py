@@ -8,12 +8,13 @@ from stock import Stock
 from tableformat import TableFormatter
 import tableformat
 import argparse
+from portfolio import Portfolio
 
 # Define a namedtuple to represent a stock record
 TableRow = namedtuple('TableRow', ['name', 'shares', 'price', 'change'])
 
 
-def read_portfolio(filename: Path) -> list[Stock]:
+def read_portfolio(filename: Path) -> Portfolio:
     """
     Convert the csv file data to a list of stocks
 
@@ -24,8 +25,7 @@ def read_portfolio(filename: Path) -> list[Stock]:
         list : The result list of stocks
     """
     with filename.open("r") as f:
-        portdicts = parse_csv(lines=f)
-    portfolio = [Stock(d['name'], d['shares'], d['price']) for d in portdicts]
+        portfolio = Portfolio.from_csv(lines=f)
     return portfolio
 
 
@@ -45,7 +45,7 @@ def read_prices(filename: Path) -> dict:
     return names_and_prices
 
 
-def make_report(portfolio: list[Stock], prices: dict) -> list[TableRow]:
+def make_report(portfolio: Portfolio, prices: dict) -> list[TableRow]:
     """
      Makes a report out of the current prices and a portfolio
 
@@ -57,7 +57,7 @@ def make_report(portfolio: list[Stock], prices: dict) -> list[TableRow]:
          list[dict]: The report
      """
     report = []
-    for stock in portfolio:
+    for stock in portfolio.stocks:
         name = stock.name
         old_price = stock.price
         new_price = prices[name]
