@@ -3,6 +3,8 @@
 import csv
 from typing import List, Dict, Any, Callable
 import yaml
+import logging
+log = logging.getLogger(__name__)
 
 
 def apply_types_functions(types, lst):
@@ -32,6 +34,7 @@ def parse_csv(lines: Any, select: List[str] = None, types: List[Callable] = None
         select = ['name', 'shares', 'price']
     if types is None:
         types = [str, int, float]
+
     records = []
     start_row = 0
 
@@ -64,8 +67,9 @@ def parse_csv(lines: Any, select: List[str] = None, types: List[Callable] = None
             records.append(record)
         except ValueError as e:
             if not silence_errors:
-                print(f"Wrong format at Line {i}: {row}\n"
-                      f"Wrong format at Line {i}: {e}")
+                log.warning("Row %d: Couldn't convert %s", i, row)
+                log.debug("Row %d: Reason %s", i, e)
+            continue
 
     return records
 
